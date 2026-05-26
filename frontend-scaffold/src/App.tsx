@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, useRoutes } from "react-router-dom";
+import { MotionConfig } from "framer-motion";
 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -11,12 +12,16 @@ import PageTransition from "@/components/shared/PageTransition";
 import { routes } from "@/routes";
 import { useI18n } from "@/i18n";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import OnboardingTour from "@/features/onboarding/OnboardingTour";
 import { onUpdateAvailable, skipWaiting } from "@/services/serviceWorker";
 
 const AppRoutes: React.FC = () => {
   const routeElements = useRoutes(routes);
   const { t } = useI18n();
   const { isOffline } = useOfflineStatus();
+  const reduceMotion = useReducedMotion();
   const [updateReady, setUpdateReady] = React.useState(false);
 
   React.useEffect(() => {
@@ -24,8 +29,10 @@ const AppRoutes: React.FC = () => {
     return unsub;
   }, []);
 
+  const { isTourOpen, completeTour, skipTour } = useOnboarding();
+
   return (
-    <>
+    <MotionConfig reducedMotion={reduceMotion ? "always" : "never"}>
       <ScrollToTop />
       <KeyboardShortcutsProvider />
       <ErrorBoundary>
@@ -69,7 +76,8 @@ const AppRoutes: React.FC = () => {
         </div>
       </ErrorBoundary>
       <ToastContainer />
-    </>
+      <OnboardingTour open={isTourOpen} onComplete={completeTour} onSkip={skipTour} />
+    </MotionConfig>
   );
 };
 
