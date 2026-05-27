@@ -585,6 +585,38 @@ export const useContract = () => {
     [contractId, wallet, server, networkDetails, withLoading],
   );
 
+  const deregisterProfile = useCallback(
+    async (): Promise<string> => {
+      const publicKey = wallet.publicKey;
+      if (!publicKey) throw new Error("Wallet not connected");
+
+      return withLoading(async () => {
+        const contract = new Contract(contractId);
+        const txBuilder = await getTxBuilder(
+          publicKey,
+          BASE_FEE,
+          server,
+          networkDetails.networkPassphrase,
+        );
+
+        const tx = txBuilder
+          .addOperation(
+            contract.call(
+              "deregister_profile",
+              accountToScVal(publicKey),
+            ),
+          )
+          .setTimeout(TimeoutInfinite)
+          .build();
+
+        const xdr = tx.toXDR();
+        const signedXdr = await wallet.signTransaction(xdr);
+        return submitTx(signedXdr, networkDetails.networkPassphrase, server);
+      });
+    },
+    [contractId, wallet, server, networkDetails, withLoading],
+  );
+
   return {
     loading,
     getProfile,
@@ -602,5 +634,6 @@ export const useContract = () => {
     updateProfile,
     sendTip,
     withdrawTips,
+    deregisterProfile,
   };
 };
